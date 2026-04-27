@@ -2,6 +2,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Configurações e Variáveis de Cache
 local StalkEnabled = false
+local ESPEnabled = false -- Nova variável para o ESP
 local StalkDistance = 3.5 
 local TP_Delay = 0.05 
 
@@ -18,13 +19,23 @@ local Window = Rayfield:CreateWindow({
       Enabled = false,
       FolderName = "GojoStalker"
    },
-   KeySystem = false 
+   KeySystem = true,
+   KeySettings = {
+      Title = "Lupos Systems | Key",
+      Subtitle = "Autenticação Necessária",
+      Note = "Chave: LUPOS_FREE_2026",
+      FileName = "LuposKey_Final_V2", 
+      SaveKey = false,
+      GrabKeyFromSite = false,
+      Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
+   }
 })
 
--- Aba Principal
+-- ABAS
 local MainTab = Window:CreateTab("Combat", 4483362458)
+local VisualsTab = Window:CreateTab("Visuals", 4335482575) -- Aba com ícone de Olho
 
--- Toggle de Ativação
+-- SEÇÃO COMBATE
 MainTab:CreateToggle({
    Name = "Stalker Mode (All Players)",
    CurrentValue = false,
@@ -34,7 +45,6 @@ MainTab:CreateToggle({
    end,
 })
 
--- Slider de Distância
 MainTab:CreateSlider({
    Name = "Distance Behind Target",
    Range = {1, 15},
@@ -47,61 +57,83 @@ MainTab:CreateSlider({
    end,
 })
 
--- Slider de Delay (Anti-Lag/Detection)
-MainTab:CreateSlider({
-   Name = "TP Delay (Performance)",
-   Range = {0, 0.5},
-   Increment = 0.01,
-   Suffix = "s",
-   CurrentValue = 0.05,
-   Flag = "DelaySlider",
+-- SEÇÃO VISUALS
+VisualsTab:CreateToggle({
+   Name = "Dummy ESP (Purple)",
+   CurrentValue = false,
+   Flag = "EspToggle",
    Callback = function(Value)
-      TP_Delay = Value
+      ESPEnabled = Value
+      if not Value then
+         -- Limpa o ESP quando desliga
+         for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj.Name == "LuposESP" then obj:Destroy() end
+         end
+      end
    end,
 })
 
--- Lógica Otimizada (Menos Lag)
+-- FUNÇÃO ESP (HIGHLIGHT)
+local function ApplyESP(model)
+    if not model:FindFirstChild("LuposESP") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "LuposESP"
+        highlight.Parent = model
+        highlight.FillColor = Color3.fromRGB(170, 0, 255) -- Roxo Gojo
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+    end
+end
+
+-- LÓGICA DO STALKER (IDÊNTICA À QUE FUNCIONOU)
 task.spawn(function()
     while true do
         if StalkEnabled then
             local playersList = Players:GetPlayers()
             local myChar = LocalPlayer.Character
-            
             if myChar then
                 for i = 1, #playersList do
                     local targetPlayer = playersList[i]
-                    
-                    -- Verifica se não é você e se o toggle continua ativo
                     if targetPlayer ~= LocalPlayer and StalkEnabled then
                         local char = targetPlayer.Character
                         if char then
                             local root = char:FindFirstChild("HumanoidRootPart")
                             local hum = char:FindFirstChildOfClass("Humanoid")
-                            
-                            -- Só teletransporta se o alvo estiver vivo
                             if root and hum and hum.Health > 0 then
                                 myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                
-                                -- Delay para registro de hit e alívio de CPU
-                                if TP_Delay > 0 then
-                                    task.wait(TP_Delay)
-                                end
+                                if TP_Delay > 0 then task.wait(TP_Delay) end
                             end
                         end
                     end
                 end
             end
         else
-            -- Se estiver desligado, espera um pouco mais para economizar recursos
             task.wait(0.5)
         end
         RunService.Heartbeat:Wait()
     end
 end)
 
+-- LÓGICA DO ESP (RODA SEPARADO PARA NÃO TRAVAR O STALKER)
+task.spawn(function()
+    while true do
+        if ESPEnabled then
+            -- Procura Dummies no Workspace (apenas Models com Humanoid que não são Players)
+            for _, obj in ipairs(workspace:GetChildren()) do
+                if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") then
+                    if not Players:GetPlayerFromCharacter(obj) then
+                        ApplyESP(obj)
+                    end
+                end
+            end
+        end
+        task.wait(2) -- Só checa novos dummies a cada 2 segundos (MUITO LEVE)
+    end
+end)
+
 Rayfield:Notify({
    Title = "Gojo 0.2 Loaded",
-   Content = "Script desenvolvido por Lupos.",
+   Content = "Stalker e ESP ativos.",
    Duration = 3,
    Image = 4483362458,
 })
