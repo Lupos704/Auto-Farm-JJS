@@ -25,13 +25,13 @@ local Window = Rayfield:CreateWindow({
       Subtitle = "Autenticação Necessária",
       Note = "Chave: LUPOS_FREE_2026",
       FileName = "LuposKey", 
-      SaveKey = false, 
+      SaveKey = false, -- Não salva a chave para a próxima sessão
       GrabKeyFromSite = false,
       Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
 })
 
--- TAB 1: MAIN (Combate)
+-- Aba Principal
 local MainTab = Window:CreateTab("Main", 4483362458)
 
 MainTab:CreateSection("Stalker Configuration")
@@ -69,42 +69,6 @@ MainTab:CreateSlider({
    end,
 })
 
--- TAB 2: SETTINGS (Temas com Correção de Erro)
-local SettingsTab = Window:CreateTab("Settings", 4483345906)
-
-SettingsTab:CreateSection("Interface Themes")
-
--- Função segura para trocar tema
-local function SafeTheme(themeName)
-    local success, err = pcall(function()
-        Rayfield:SetTheme(themeName)
-    end)
-    if not success then
-        warn("LUPOS: Erro ao aplicar tema " .. themeName .. ": " .. tostring(err))
-    end
-end
-
-SettingsTab:CreateButton({
-   Name = "Amber Theme",
-   Callback = function()
-      SafeTheme("Amber")
-   end,
-})
-
-SettingsTab:CreateButton({
-   Name = "Purple Theme",
-   Callback = function()
-      SafeTheme("Purple")
-   end,
-})
-
-SettingsTab:CreateButton({
-   Name = "Ocean Theme",
-   Callback = function()
-      SafeTheme("Ocean")
-   end,
-})
-
 -- Lógica Otimizada Anti-Lag
 task.spawn(function()
     while true do
@@ -124,28 +88,29 @@ task.spawn(function()
                             local hum = char:FindFirstChildOfClass("Humanoid")
                             
                             if root and hum and hum.Health > 0 then
+                                -- Teleporte suave usando Pivot
                                 myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                if TP_Delay > 0 then task.wait(TP_Delay) end
+                                
+                                -- Delay para processamento e hit registration
+                                if TP_Delay > 0 then
+                                    task.wait(TP_Delay)
+                                end
                             end
                         end
                     end
                 end
             end
         else
+            -- Economiza recursos enquanto desligado
             task.wait(0.3)
         end
         RunService.Heartbeat:Wait()
     end
 end)
 
--- Tenta forçar o Amber após um pequeno delay para evitar erro de carregamento
-task.delay(1, function()
-    SafeTheme("Amber")
-end)
-
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
-   Content = "Gojo 0.2 Carregado!",
+   Content = "Gojo 0.2 carregado com sucesso!",
    Duration = 5,
    Image = 4483362458,
 })
