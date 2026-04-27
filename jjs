@@ -9,7 +9,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Janela Principal com Tema AMBER
+-- Janela Principal
 local Window = Rayfield:CreateWindow({
    Name = "LUPOS | v0.2",
    LoadingTitle = "LUPOS SYSTEMS",
@@ -25,19 +25,15 @@ local Window = Rayfield:CreateWindow({
       Subtitle = "Sistema de Autenticação",
       Note = "Chave: LUPOS_FREE_2026",
       FileName = "LuposKey", 
-      SaveKey = true, 
+      SaveKey = false, 
       GrabKeyFromSite = false,
       Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
 })
 
--- Comando de Forçar Tema
-Rayfield:SetTheme("Amber") 
-
--- Aba de Combate
+-- TAB 1: MAIN (Combate)
 local MainTab = Window:CreateTab("Main", 4483362458)
 
--- Interface de Usuário
 MainTab:CreateSection("Stalker Configuration")
 
 MainTab:CreateToggle({
@@ -70,6 +66,46 @@ MainTab:CreateSlider({
    Flag = "DelaySlider",
    Callback = function(Value)
       TP_Delay = Value
+   end,
+})
+
+-- TAB 2: SETTINGS (Temas e Customização)
+local SettingsTab = Window:CreateTab("Settings", 4483345906) -- Ícone de engrenagem
+
+SettingsTab:CreateSection("Interface Themes")
+
+SettingsTab:CreateButton({
+   Name = "Amber Theme (Laranja)",
+   Callback = function()
+      Rayfield:SetTheme("Amber")
+   end,
+})
+
+SettingsTab:CreateButton({
+   Name = "Purple Theme (Roxo)",
+   Callback = function()
+      Rayfield:SetTheme("Purple")
+   end,
+})
+
+SettingsTab:CreateButton({
+   Name = "Ocean Theme (Azul)",
+   Callback = function()
+      Rayfield:SetTheme("Ocean")
+   end,
+})
+
+SettingsTab:CreateButton({
+   Name = "Green Theme (Verde)",
+   Callback = function()
+      Rayfield:SetTheme("Green")
+   end,
+})
+
+SettingsTab:CreateButton({
+   Name = "Default Theme (Dark)",
+   Callback = function()
+      Rayfield:SetTheme("Default")
    end,
 })
 
@@ -106,9 +142,12 @@ task.spawn(function()
     end
 end)
 
+-- Tenta forçar o Amber no início
+Rayfield:SetTheme("Amber")
+
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
-   Content = "Gojo 0.2 (Amber Edition) Loaded!",
-   Duration = 4,
+   Content = "Script Pronto! Use a aba Settings para trocar a cor.",
+   Duration = 5,
    Image = 4483362458,
 })
