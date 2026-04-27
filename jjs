@@ -9,7 +9,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Janela Principal (Design Clean)
+-- Janela Principal com Sistema de Key
 local Window = Rayfield:CreateWindow({
    Name = "LUPOS | v0.2",
    LoadingTitle = "LUPOS SYSTEMS",
@@ -19,7 +19,16 @@ local Window = Rayfield:CreateWindow({
       FolderName = "LuposScripts",
       FileName = "Gojo_02"
    },
-   KeySystem = false 
+   KeySystem = true, -- Ativa o sistema de chaves
+   KeySettings = {
+      Title = "Lupos Systems | Key",
+      Subtitle = "Sistema de Autenticação",
+      Note = "Chave: LUPOS_FREE_2026", -- Nota que aparece para o usuário
+      FileName = "LuposKey", 
+      SaveKey = true, 
+      GrabKeyFromSite = false,
+      Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"} -- Chaves válidas
+   }
 })
 
 -- Aba de Combate
@@ -100,7 +109,7 @@ task.spawn(function()
     end
 end)
 
--- Notificação de Sucesso
+-- Notificação de Sucesso (Só aparece se a Key estiver correta)
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
    Content = "Gojo 0.2 carregado com sucesso!",
