@@ -2,6 +2,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Configurações e Cache
 local StalkEnabled = false
+local ESPEnabled = false
 local StalkDistance = 3.5 
 local TP_Delay = 0.05 
 
@@ -25,14 +26,14 @@ local Window = Rayfield:CreateWindow({
       Subtitle = "Autenticação Necessária",
       Note = "Chave: LUPOS_FREE_2026",
       FileName = "LuposKey", 
-      SaveKey = false, -- Não salva a chave para a próxima sessão
+      SaveKey = false,
       GrabKeyFromSite = false,
       Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
 })
 
--- Aba Principal
-local MainTab = Window:CreateTab("Main", 4483362458)
+-- TAB 1: MAIN (Combate - Ícone de Espada/Luta)
+local MainTab = Window:CreateTab("Main", 4483362458) 
 
 MainTab:CreateSection("Stalker Configuration")
 
@@ -69,9 +70,38 @@ MainTab:CreateSlider({
    end,
 })
 
--- Lógica Otimizada Anti-Lag
+-- TAB 2: VISUALS (ESP - ÍCONE DE OLHO)
+-- O ID 4335482575 é um ícone de olho clássico para ESP
+local VisualsTab = Window:CreateTab("Visuals", 4335482575) 
+
+VisualsTab:CreateSection("ESP Settings")
+
+VisualsTab:CreateToggle({
+   Name = "Enable ESP (Players & Dummies)",
+   CurrentValue = false,
+   Flag = "ESPToggle",
+   Callback = function(Value)
+      ESPEnabled = Value
+   end,
+})
+
+-- Função para Criar o Highlight
+local function ApplyESP(object, color)
+    if not object:FindFirstChild("LuposESP") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "LuposESP"
+        highlight.Parent = object
+        highlight.FillColor = color
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+    end
+end
+
+-- Lógica Principal (Stalker + ESP)
 task.spawn(function()
     while true do
+        -- Lógica do STALKER
         if StalkEnabled then
             local playersList = Players:GetPlayers()
             local myChar = LocalPlayer.Character
@@ -79,38 +109,51 @@ task.spawn(function()
             if myChar and myChar:FindFirstChild("HumanoidRootPart") then
                 for i = 1, #playersList do
                     if not StalkEnabled then break end
-                    
                     local targetPlayer = playersList[i]
                     if targetPlayer ~= LocalPlayer then
                         local char = targetPlayer.Character
                         if char then
                             local root = char:FindFirstChild("HumanoidRootPart")
                             local hum = char:FindFirstChildOfClass("Humanoid")
-                            
                             if root and hum and hum.Health > 0 then
-                                -- Teleporte suave usando Pivot
                                 myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                
-                                -- Delay para processamento e hit registration
-                                if TP_Delay > 0 then
-                                    task.wait(TP_Delay)
-                                end
+                                if TP_Delay > 0 then task.wait(TP_Delay) end
                             end
                         end
                     end
                 end
             end
-        else
-            -- Economiza recursos enquanto desligado
-            task.wait(0.3)
         end
+
+        -- Lógica do ESP Otimizada
+        if ESPEnabled then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
+                    ApplyESP(player.Character, Color3.fromRGB(0, 255, 255))
+                end
+            end
+
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") then
+                    if not Players:GetPlayerFromCharacter(obj) then
+                        ApplyESP(obj, Color3.fromRGB(255, 0, 255))
+                    end
+                end
+            end
+        else
+            -- Limpeza de ESP quando desligado
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj.Name == "LuposESP" then obj:Destroy() end
+            end
+        end
+        
         RunService.Heartbeat:Wait()
     end
 end)
 
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
-   Content = "Gojo 0.2 carregado com sucesso!",
+   Content = "Visuals Tab com Ícone de Olho carregada!",
    Duration = 5,
-   Image = 4483362458,
+   Image = 4335482575,
 })
