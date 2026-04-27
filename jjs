@@ -9,7 +9,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Janela Principal com Sistema de Key e TEMA ROXO
+-- Janela Principal com Tema AMBER
 local Window = Rayfield:CreateWindow({
    Name = "LUPOS | v0.2",
    LoadingTitle = "LUPOS SYSTEMS",
@@ -31,8 +31,8 @@ local Window = Rayfield:CreateWindow({
    }
 })
 
--- ESTA LINHA MUDA A COR DA GUI
-Rayfield:SetTheme("Purple") 
+-- Comando de Forçar Tema
+Rayfield:SetTheme("Amber") 
 
 -- Aba de Combate
 local MainTab = Window:CreateTab("Main", 4483362458)
@@ -108,7 +108,7 @@ end)
 
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
-   Content = "Gojo 0.2 (Purple Edition) Loaded!",
+   Content = "Gojo 0.2 (Amber Edition) Loaded!",
    Duration = 4,
    Image = 4483362458,
 })
