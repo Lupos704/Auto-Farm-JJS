@@ -1,8 +1,7 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Configurações
+-- Configurações e Cache
 local StalkEnabled = false
-local ESPEnabled = false
 local StalkDistance = 3.5 
 local TP_Delay = 0.05 
 
@@ -14,110 +13,100 @@ local LocalPlayer = Players.LocalPlayer
 local Window = Rayfield:CreateWindow({
    Name = "LUPOS | v0.2",
    LoadingTitle = "LUPOS SYSTEMS",
-   LoadingSubtitle = "Otimizando Performance...",
-   ConfigurationSaving = { Enabled = false },
+   LoadingSubtitle = "by Lupos",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "LuposScripts",
+      FileName = "Gojo_02"
+   },
    KeySystem = true,
    KeySettings = {
       Title = "Lupos Systems | Key",
-      Subtitle = "Autenticação",
+      Subtitle = "Autenticação Necessária",
       Note = "Chave: LUPOS_FREE_2026",
       FileName = "LuposKey", 
-      SaveKey = false,
+      SaveKey = false, -- Exige a chave sempre
+      GrabKeyFromSite = false,
       Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
 })
 
--- Criando as Abas primeiro para garantir o carregamento visual
-local MainTab = Window:CreateTab("Main", 4483362458) 
-local VisualsTab = Window:CreateTab("Visuals", 4335482575) 
+-- Aba Única (Foco em Performance)
+local MainTab = Window:CreateTab("Main", 4483362458)
 
--- Interface
 MainTab:CreateSection("Stalker Configuration")
-MainTab:CreateToggle({ Name = "Global Hyper-Stalker", CurrentValue = false, Flag = "StalkToggle", Callback = function(Value) StalkEnabled = Value end })
-MainTab:CreateSlider({ Name = "Distance", Range = {1, 15}, Increment = 0.5, Suffix = " studs", CurrentValue = 3.5, Flag = "DistSlider", Callback = function(Value) StalkDistance = Value end })
 
-VisualsTab:CreateSection("ESP Settings")
-VisualsTab:CreateToggle({ Name = "Enable ESP", CurrentValue = false, Flag = "ESPToggle", Callback = function(Value) ESPEnabled = Value end })
+MainTab:CreateToggle({
+   Name = "Global Hyper-Stalker",
+   CurrentValue = false,
+   Flag = "StalkToggle",
+   Callback = function(Value)
+      StalkEnabled = Value
+   end,
+})
 
--- Função de ESP Ultra Leve
-local function ApplyHighlight(char, color)
-    if char and not char:FindFirstChild("LuposESP") then
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "LuposESP"
-        highlight.Parent = char
-        highlight.FillColor = color
-        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-        highlight.FillTransparency = 0.5
-        highlight.Enabled = ESPEnabled
-    end
-end
+MainTab:CreateSlider({
+   Name = "Distance (Studs)",
+   Range = {1, 15},
+   Increment = 0.5,
+   Suffix = " studs",
+   CurrentValue = 3.5,
+   Flag = "DistSlider",
+   Callback = function(Value)
+      StalkDistance = Value
+   end,
+})
 
--- Gerenciador de ESP (Sem loops pesados)
-local function UpdateESP()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            ApplyHighlight(player.Character, Color3.fromRGB(0, 255, 255))
-            if player.Character:FindFirstChild("LuposESP") then
-                player.Character.LuposESP.Enabled = ESPEnabled
-            end
-        end
-    end
-    
-    -- Procura Dummies apenas no Workspace raiz (mais rápido)
-    for _, obj in ipairs(workspace:GetChildren()) do
-        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and not Players:GetPlayerFromCharacter(obj) then
-            ApplyHighlight(obj, Color3.fromRGB(255, 0, 255))
-            if obj:FindFirstChild("LuposESP") then
-                obj.LuposESP.Enabled = ESPEnabled
-            end
-        end
-    end
-end
+MainTab:CreateSlider({
+   Name = "TP Delay / Lag Fix",
+   Range = {0, 0.5},
+   Increment = 0.01,
+   Suffix = "s",
+   CurrentValue = 0.05,
+   Flag = "DelaySlider",
+   Callback = function(Value)
+      TP_Delay = Value
+   end,
+})
 
--- Loop de Movimentação (Stalker) - Otimizado para 30 FPS de checagem
+-- Lógica Otimizada (Loop Leve)
 task.spawn(function()
     while true do
         if StalkEnabled then
-            pcall(function()
-                local myChar = LocalPlayer.Character
-                if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                    for _, player in ipairs(Players:GetPlayers()) do
-                        if player ~= LocalPlayer and player.Character then
-                            local root = player.Character:FindFirstChild("HumanoidRootPart")
-                            if root and player.Character.Humanoid.Health > 0 then
+            local myChar = LocalPlayer.Character
+            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                local playersList = Players:GetPlayers()
+                for i = 1, #playersList do
+                    if not StalkEnabled then break end
+                    
+                    local targetPlayer = playersList[i]
+                    if targetPlayer ~= LocalPlayer then
+                        local char = targetPlayer.Character
+                        if char then
+                            local root = char:FindFirstChild("HumanoidRootPart")
+                            local hum = char:FindFirstChildOfClass("Humanoid")
+                            
+                            if root and hum and hum.Health > 0 then
                                 myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                if TP_Delay > 0 then task.wait(TP_Delay) end
+                                
+                                if TP_Delay > 0 then
+                                    task.wait(TP_Delay)
+                                end
                             end
                         end
                     end
                 end
-            end)
-        end
-        task.wait(0.03) -- Trava o loop em ~30hz para não fritar a CPU
-    end
-end)
-
--- Loop de ESP (Apenas atualização de estado)
-task.spawn(function()
-    while true do
-        if ESPEnabled then
-            UpdateESP()
-            task.wait(1) -- Atualiza novos bonecos a cada 1 segundo (muito mais leve)
-        else
-            -- Desativa o brilho sem deletar (mais rápido para o PC)
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj.Name == "LuposESP" and obj:IsA("Highlight") then
-                    obj.Enabled = false
-                end
             end
-            task.wait(1)
+        else
+            task.wait(0.5) -- Descanso total da CPU se estiver desligado
         end
+        RunService.Heartbeat:Wait()
     end
 end)
 
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
-   Content = "Performance Otimizada! ESP e Stalker prontos.",
-   Duration = 5,
-   Image = 4335482575,
+   Content = "Versão Performance carregada!",
+   Duration = 4,
+   Image = 4483362458,
 })
