@@ -25,7 +25,7 @@ local Window = Rayfield:CreateWindow({
       Subtitle = "Sistema de Autenticação",
       Note = "Chave: LUPOS_FREE_2026",
       FileName = "LuposKey", 
-      SaveKey = false, 
+      SaveKey = false, -- AGORA DEFINIDO COMO FALSO: Não salvará a chave no PC
       GrabKeyFromSite = false,
       Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
@@ -70,7 +70,7 @@ MainTab:CreateSlider({
 })
 
 -- TAB 2: SETTINGS (Temas e Customização)
-local SettingsTab = Window:CreateTab("Settings", 4483345906) -- Ícone de engrenagem
+local SettingsTab = Window:CreateTab("Settings", 4483345906)
 
 SettingsTab:CreateSection("Interface Themes")
 
@@ -92,20 +92,6 @@ SettingsTab:CreateButton({
    Name = "Ocean Theme (Azul)",
    Callback = function()
       Rayfield:SetTheme("Ocean")
-   end,
-})
-
-SettingsTab:CreateButton({
-   Name = "Green Theme (Verde)",
-   Callback = function()
-      Rayfield:SetTheme("Green")
-   end,
-})
-
-SettingsTab:CreateButton({
-   Name = "Default Theme (Dark)",
-   Callback = function()
-      Rayfield:SetTheme("Default")
    end,
 })
 
@@ -147,7 +133,7 @@ Rayfield:SetTheme("Amber")
 
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
-   Content = "Script Pronto! Use a aba Settings para trocar a cor.",
+   Content = "Autenticação requerida em cada execução.",
    Duration = 5,
    Image = 4483362458,
 })
