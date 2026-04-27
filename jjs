@@ -22,10 +22,10 @@ local Window = Rayfield:CreateWindow({
    KeySystem = true,
    KeySettings = {
       Title = "Lupos Systems | Key",
-      Subtitle = "Sistema de Autenticação",
+      Subtitle = "Autenticação Necessária",
       Note = "Chave: LUPOS_FREE_2026",
       FileName = "LuposKey", 
-      SaveKey = false, -- AGORA DEFINIDO COMO FALSO: Não salvará a chave no PC
+      SaveKey = false, 
       GrabKeyFromSite = false,
       Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
@@ -69,29 +69,39 @@ MainTab:CreateSlider({
    end,
 })
 
--- TAB 2: SETTINGS (Temas e Customização)
+-- TAB 2: SETTINGS (Temas com Correção de Erro)
 local SettingsTab = Window:CreateTab("Settings", 4483345906)
 
 SettingsTab:CreateSection("Interface Themes")
 
+-- Função segura para trocar tema
+local function SafeTheme(themeName)
+    local success, err = pcall(function()
+        Rayfield:SetTheme(themeName)
+    end)
+    if not success then
+        warn("LUPOS: Erro ao aplicar tema " .. themeName .. ": " .. tostring(err))
+    end
+end
+
 SettingsTab:CreateButton({
-   Name = "Amber Theme (Laranja)",
+   Name = "Amber Theme",
    Callback = function()
-      Rayfield:SetTheme("Amber")
+      SafeTheme("Amber")
    end,
 })
 
 SettingsTab:CreateButton({
-   Name = "Purple Theme (Roxo)",
+   Name = "Purple Theme",
    Callback = function()
-      Rayfield:SetTheme("Purple")
+      SafeTheme("Purple")
    end,
 })
 
 SettingsTab:CreateButton({
-   Name = "Ocean Theme (Azul)",
+   Name = "Ocean Theme",
    Callback = function()
-      Rayfield:SetTheme("Ocean")
+      SafeTheme("Ocean")
    end,
 })
 
@@ -128,12 +138,14 @@ task.spawn(function()
     end
 end)
 
--- Tenta forçar o Amber no início
-Rayfield:SetTheme("Amber")
+-- Tenta forçar o Amber após um pequeno delay para evitar erro de carregamento
+task.delay(1, function()
+    SafeTheme("Amber")
+end)
 
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
-   Content = "Autenticação requerida em cada execução.",
+   Content = "Gojo 0.2 Carregado!",
    Duration = 5,
    Image = 4483362458,
 })
