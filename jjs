@@ -9,7 +9,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Janela Principal com Sistema de Key
+-- Janela Principal com Sistema de Key e TEMA ROXO
 local Window = Rayfield:CreateWindow({
    Name = "LUPOS | v0.2",
    LoadingTitle = "LUPOS SYSTEMS",
@@ -19,17 +19,20 @@ local Window = Rayfield:CreateWindow({
       FolderName = "LuposScripts",
       FileName = "Gojo_02"
    },
-   KeySystem = true, -- Ativa o sistema de chaves
+   KeySystem = true,
    KeySettings = {
       Title = "Lupos Systems | Key",
       Subtitle = "Sistema de Autenticação",
-      Note = "Chave: LUPOS_FREE_2026", -- Nota que aparece para o usuário
+      Note = "Chave: LUPOS_FREE_2026",
       FileName = "LuposKey", 
       SaveKey = true, 
       GrabKeyFromSite = false,
-      Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"} -- Chaves válidas
+      Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
 })
+
+-- ESTA LINHA MUDA A COR DA GUI
+Rayfield:SetTheme("Purple") 
 
 -- Aba de Combate
 local MainTab = Window:CreateTab("Main", 4483362458)
@@ -89,30 +92,23 @@ task.spawn(function()
                             local hum = char:FindFirstChildOfClass("Humanoid")
                             
                             if root and hum and hum.Health > 0 then
-                                -- Teleporte suave usando Pivot
                                 myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                
-                                -- Delay para processamento e hit registration
-                                if TP_Delay > 0 then
-                                    task.wait(TP_Delay)
-                                end
+                                if TP_Delay > 0 then task.wait(TP_Delay) end
                             end
                         end
                     end
                 end
             end
         else
-            -- Economiza CPU quando o script está desligado
             task.wait(0.3)
         end
         RunService.Heartbeat:Wait()
     end
 end)
 
--- Notificação de Sucesso (Só aparece se a Key estiver correta)
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
-   Content = "Gojo 0.2 carregado com sucesso!",
+   Content = "Gojo 0.2 (Purple Edition) Loaded!",
    Duration = 4,
    Image = 4483362458,
 })
