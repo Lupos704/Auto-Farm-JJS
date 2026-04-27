@@ -2,7 +2,6 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Configurações e Cache
 local StalkEnabled = false
-local GhostEnabled = false
 local StalkDistance = 3.5 
 local TP_Delay = 0.05 
 
@@ -10,11 +9,11 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Janela Principal
+-- Janela Principal (Design Clean)
 local Window = Rayfield:CreateWindow({
    Name = "LUPOS | v0.2",
    LoadingTitle = "LUPOS SYSTEMS",
-   LoadingSubtitle = "Infinity Void Initializing...",
+   LoadingSubtitle = "by Lupos",
    ConfigurationSaving = {
       Enabled = true,
       FolderName = "LuposScripts",
@@ -23,12 +22,13 @@ local Window = Rayfield:CreateWindow({
    KeySystem = false 
 })
 
--- TAB 1: COMBAT (O Stalker que você já tem)
-local CombatTab = Window:CreateTab("Combat", 4483362458)
+-- Aba de Combate
+local MainTab = Window:CreateTab("Main", 4483362458)
 
-CombatTab:CreateSection("Stalker Configuration")
+-- Interface de Usuário
+MainTab:CreateSection("Stalker Configuration")
 
-CombatTab:CreateToggle({
+MainTab:CreateToggle({
    Name = "Global Hyper-Stalker",
    CurrentValue = false,
    Flag = "StalkToggle",
@@ -37,7 +37,7 @@ CombatTab:CreateToggle({
    end,
 })
 
-CombatTab:CreateSlider({
+MainTab:CreateSlider({
    Name = "Distance (Studs)",
    Range = {1, 15},
    Increment = 0.5,
@@ -49,7 +49,7 @@ CombatTab:CreateSlider({
    end,
 })
 
-CombatTab:CreateSlider({
+MainTab:CreateSlider({
    Name = "TP Delay / Lag Fix",
    Range = {0, 0.5},
    Increment = 0.01,
@@ -61,54 +61,9 @@ CombatTab:CreateSlider({
    end,
 })
 
--- TAB 2: GHOST (Invisibilidade e Extras)
-local GhostTab = Window:CreateTab("Ghost", 4483472135) -- Ícone de fantasma
-
-GhostTab:CreateSection("Stealth Modules")
-
-GhostTab:CreateToggle({
-   Name = "Invisibility (Transparency)",
-   CurrentValue = false,
-   Flag = "InvisToggle",
-   Callback = function(Value)
-      GhostEnabled = Value
-      
-      -- Função para aplicar transparência
-      local function ApplyGhost(character)
-          for _, part in ipairs(character:GetDescendants()) do
-              if part:IsA("BasePart") or part:IsA("Decal") then
-                  part.Transparency = Value and 1 or 0
-                  if part:IsA("BasePart") then
-                      part.CastShadow = not Value
-                  end
-              end
-          end
-      end
-
-      if LocalPlayer.Character then
-          ApplyGhost(LocalPlayer.Character)
-      end
-   end,
-})
-
-GhostTab:CreateButton({
-   Name = "Force Reset Appearance",
-   Callback = function()
-      local char = LocalPlayer.Character
-      if char then
-          for _, part in ipairs(char:GetDescendants()) do
-              if part:IsA("BasePart") or part:IsA("Decal") then
-                  part.Transparency = 0
-              end
-          end
-      end
-   end,
-})
-
--- LÓGICA PRINCIPAL (Loop Otimizado)
+-- Lógica Otimizada Anti-Lag
 task.spawn(function()
     while true do
-        -- Loop do Stalker
         if StalkEnabled then
             local playersList = Players:GetPlayers()
             local myChar = LocalPlayer.Character
@@ -125,37 +80,30 @@ task.spawn(function()
                             local hum = char:FindFirstChildOfClass("Humanoid")
                             
                             if root and hum and hum.Health > 0 then
+                                -- Teleporte suave usando Pivot
                                 myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                if TP_Delay > 0 then task.wait(TP_Delay) end
+                                
+                                -- Delay para processamento e hit registration
+                                if TP_Delay > 0 then
+                                    task.wait(TP_Delay)
+                                end
                             end
                         end
                     end
                 end
             end
-        end
-
-        -- Mantém invisível mesmo se o jogo tentar resetar (se o toggle estiver ativo)
-        if GhostEnabled then
-            local myChar = LocalPlayer.Character
-            if myChar then
-                for _, part in ipairs(myChar:GetDescendants()) do
-                    if (part:IsA("BasePart") or part:IsA("Decal")) and part.Transparency ~= 1 then
-                        part.Transparency = 1
-                    end
-                end
-            end
-        end
-
-        if not StalkEnabled and not GhostEnabled then
-            task.wait(0.3) -- Economiza CPU se nada estiver ativo
+        else
+            -- Economiza CPU quando o script está desligado
+            task.wait(0.3)
         end
         RunService.Heartbeat:Wait()
     end
 end)
 
+-- Notificação de Sucesso
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
-   Content = "Gojo 0.2 | Ghost Tab Loaded",
+   Content = "Gojo 0.2 carregado com sucesso!",
    Duration = 4,
    Image = 4483362458,
 })
