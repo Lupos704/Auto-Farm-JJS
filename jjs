@@ -1,10 +1,12 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local CollectionService = game:GetService("CollectionService") -- Novo serviço necessário
 
 -- Configurações e Variáveis de Cache
 local StalkEnabled = false
-local ESPEnabled = false -- Nova variável para o ESP
+local ESPEnabled = false -- Variável do ESP
 local StalkDistance = 3.5 
 local TP_Delay = 0.05 
+local DUMMY_TAG = "LuposDummyNPC" -- Tag invisível para marcar dummies
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -15,77 +17,58 @@ local Window = Rayfield:CreateWindow({
    Name = "Gojo 0.2 By: Lupos",
    LoadingTitle = "Infinity Void System",
    LoadingSubtitle = "By Lupos",
-   ConfigurationSaving = {
-      Enabled = false,
-      FolderName = "GojoStalker"
-   },
+   ConfigurationSaving = { Enabled = false, FolderName = "GojoStalker" },
    KeySystem = true,
    KeySettings = {
       Title = "Lupos Systems | Key",
-      Subtitle = "Autenticação Necessária",
+      Subtitle = "Autenticação",
       Note = "Chave: LUPOS_FREE_2026",
-      FileName = "LuposKey_Final_V2", 
+      FileName = "LuposKey_Final_V3", 
       SaveKey = false,
-      GrabKeyFromSite = false,
       Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
 })
 
 -- ABAS
 local MainTab = Window:CreateTab("Combat", 4483362458)
-local VisualsTab = Window:CreateTab("Visuals", 4335482575) -- Aba com ícone de Olho
+local VisualsTab = Window:CreateTab("Visuals", 4335482575) 
 
--- SEÇÃO COMBATE
-MainTab:CreateToggle({
-   Name = "Stalker Mode (All Players)",
-   CurrentValue = false,
-   Flag = "StalkToggle",
-   Callback = function(Value)
-      StalkEnabled = Value
-   end,
-})
+-- INTERFACE COMBAT
+MainTab:CreateToggle({ Name = "Stalker Mode (All Players)", CurrentValue = false, Flag = "StalkToggle", Callback = function(Value) StalkEnabled = Value end })
+MainTab:CreateSlider({ Name = "Distance Behind Target", Range = {1, 15}, Increment = 0.5, Suffix = " Studs", CurrentValue = 3.5, Flag = "DistSlider", Callback = function(Value) StalkDistance = Value end })
 
-MainTab:CreateSlider({
-   Name = "Distance Behind Target",
-   Range = {1, 15},
-   Increment = 0.5,
-   Suffix = " Studs",
-   CurrentValue = 3.5,
-   Flag = "DistSlider",
-   Callback = function(Value)
-      StalkDistance = Value
-   end,
-})
-
--- SEÇÃO VISUALS
+-- INTERFACE VISUALS
 VisualsTab:CreateToggle({
-   Name = "Dummy ESP (Purple)",
+   Name = "Dummy ESP (Purple Neon)",
    CurrentValue = false,
    Flag = "EspToggle",
    Callback = function(Value)
       ESPEnabled = Value
+      -- Se desligar, remove todos os brilhos instantaneamente
       if not Value then
-         -- Limpa o ESP quando desliga
-         for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj.Name == "LuposESP" then obj:Destroy() end
+         for _, obj in ipairs(CollectionService:GetTagged(DUMMY_TAG)) do
+            if obj:FindFirstChild("LuposESP") then obj.LuposESP:Destroy() end
          end
       end
    end,
 })
 
--- FUNÇÃO ESP (HIGHLIGHT)
-local function ApplyESP(model)
-    if not model:FindFirstChild("LuposESP") then
+-- Função ESP (HIGHLIGHT)
+local function ApplyHighlight(model)
+    if model:IsA("Model") and not model:FindFirstChild("LuposESP") then
         local highlight = Instance.new("Highlight")
         highlight.Name = "LuposESP"
         highlight.Parent = model
         highlight.FillColor = Color3.fromRGB(170, 0, 255) -- Roxo Gojo
-        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Contorno Branco
         highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
     end
 end
 
--- LÓGICA DO STALKER (IDÊNTICA À QUE FUNCIONOU)
+-- ========================================================
+-- LÓGICA DO STALKER (IDÊNTICA À QUE FUNCIONOU - NÃO MEXER)
+-- ========================================================
 task.spawn(function()
     while true do
         if StalkEnabled then
@@ -114,26 +97,46 @@ task.spawn(function()
     end
 end)
 
--- LÓGICA DO ESP (RODA SEPARADO PARA NÃO TRAVAR O STALKER)
+-- ========================================================
+-- LÓGICA DO ESP (ULTRA OTIMIZADA)
+-- ========================================================
+
+-- 1. Função para marcar Dummies automaticamente (Roda apenas UMA vez)
+-- Ela procura modelos que tenham um Humanoid e a palavra "Dummy" no nome.
+-- Se o seu jogo usa outro nome, mude "Dummy" abaixo.
+local function TagDummiesAutomatically()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") then
+            if not Players:GetPlayerFromCharacter(obj) and string.find(obj.Name, "Dummy") then
+                CollectionService:AddTag(obj, DUMMY_TAG)
+            end
+        end
+    end
+end
+
+-- Roda a marcação em segundo plano para não dar mini-lag ao iniciar
+task.spawn(TagDummiesAutomatically)
+
+-- 2. Loop de verificação do ESP (Super leve, roda a cada 5s)
 task.spawn(function()
     while true do
         if ESPEnabled then
-            -- Procura Dummies no Workspace (apenas Models com Humanoid que não são Players)
-            for _, obj in ipairs(workspace:GetChildren()) do
-                if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") then
-                    if not Players:GetPlayerFromCharacter(obj) then
-                        ApplyESP(obj)
+            -- CollectionService acha todos os marcados instantaneamente
+            for _, dummy in ipairs(CollectionService:GetTagged(DUMMY_TAG)) do
+                pcall(function() -- Escudo contra erros se o dummy sumir
+                    if dummy and dummy.Parent then
+                        ApplyHighlight(dummy)
                     end
-                end
+                end)
             end
         end
-        task.wait(2) -- Só checa novos dummies a cada 2 segundos (MUITO LEVE)
+        task.wait(5) -- Checa novos dummies só a cada 5 segundos
     end
 end)
 
 Rayfield:Notify({
    Title = "Gojo 0.2 Loaded",
-   Content = "Stalker e ESP ativos.",
+   Content = "Stalker Funcional e ESP Leve prontos.",
    Duration = 3,
    Image = 4483362458,
 })
