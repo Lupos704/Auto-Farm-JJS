@@ -15,11 +15,7 @@ local Window = Rayfield:CreateWindow({
    Name = "LUPOS | v0.2",
    LoadingTitle = "LUPOS SYSTEMS",
    LoadingSubtitle = "by Lupos",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "LuposScripts",
-      FileName = "Gojo_02"
-   },
+   ConfigurationSaving = { Enabled = true, FolderName = "LuposScripts", FileName = "Gojo_02" },
    KeySystem = true,
    KeySettings = {
       Title = "Lupos Systems | Key",
@@ -27,65 +23,24 @@ local Window = Rayfield:CreateWindow({
       Note = "Chave: LUPOS_FREE_2026",
       FileName = "LuposKey", 
       SaveKey = false,
-      GrabKeyFromSite = false,
       Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
 })
 
--- TAB 1: MAIN (Combate - Ícone de Espada/Luta)
+-- ABAS
 local MainTab = Window:CreateTab("Main", 4483362458) 
-
-MainTab:CreateSection("Stalker Configuration")
-
-MainTab:CreateToggle({
-   Name = "Global Hyper-Stalker",
-   CurrentValue = false,
-   Flag = "StalkToggle",
-   Callback = function(Value)
-      StalkEnabled = Value
-   end,
-})
-
-MainTab:CreateSlider({
-   Name = "Distance (Studs)",
-   Range = {1, 15},
-   Increment = 0.5,
-   Suffix = " studs",
-   CurrentValue = 3.5,
-   Flag = "DistSlider",
-   Callback = function(Value)
-      StalkDistance = Value
-   end,
-})
-
-MainTab:CreateSlider({
-   Name = "TP Delay / Lag Fix",
-   Range = {0, 0.5},
-   Increment = 0.01,
-   Suffix = "s",
-   CurrentValue = 0.05,
-   Flag = "DelaySlider",
-   Callback = function(Value)
-      TP_Delay = Value
-   end,
-})
-
--- TAB 2: VISUALS (ESP - ÍCONE DE OLHO)
--- O ID 4335482575 é um ícone de olho clássico para ESP
 local VisualsTab = Window:CreateTab("Visuals", 4335482575) 
 
+-- INTERFACE
+MainTab:CreateSection("Stalker Configuration")
+MainTab:CreateToggle({ Name = "Global Hyper-Stalker", CurrentValue = false, Flag = "StalkToggle", Callback = function(Value) StalkEnabled = Value end })
+MainTab:CreateSlider({ Name = "Distance", Range = {1, 15}, Increment = 0.5, Suffix = " studs", CurrentValue = 3.5, Flag = "DistSlider", Callback = function(Value) StalkDistance = Value end })
+MainTab:CreateSlider({ Name = "TP Delay", Range = {0, 0.5}, Increment = 0.01, Suffix = "s", CurrentValue = 0.05, Flag = "DelaySlider", Callback = function(Value) TP_Delay = Value end })
+
 VisualsTab:CreateSection("ESP Settings")
+VisualsTab:CreateToggle({ Name = "Enable ESP", CurrentValue = false, Flag = "ESPToggle", Callback = function(Value) ESPEnabled = Value end })
 
-VisualsTab:CreateToggle({
-   Name = "Enable ESP (Players & Dummies)",
-   CurrentValue = false,
-   Flag = "ESPToggle",
-   Callback = function(Value)
-      ESPEnabled = Value
-   end,
-})
-
--- Função para Criar o Highlight
+-- FUNÇÃO ESP OTIMIZADA
 local function ApplyESP(object, color)
     if not object:FindFirstChild("LuposESP") then
         local highlight = Instance.new("Highlight")
@@ -94,66 +49,63 @@ local function ApplyESP(object, color)
         highlight.FillColor = color
         highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
         highlight.FillTransparency = 0.5
-        highlight.OutlineTransparency = 0
     end
 end
 
--- Lógica Principal (Stalker + ESP)
+-- LOOP DO STALKER (Separado para performance)
 task.spawn(function()
-    while true do
-        -- Lógica do STALKER
+    while task.wait() do
         if StalkEnabled then
-            local playersList = Players:GetPlayers()
             local myChar = LocalPlayer.Character
-            
             if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                for i = 1, #playersList do
+                for _, player in ipairs(Players:GetPlayers()) do
                     if not StalkEnabled then break end
-                    local targetPlayer = playersList[i]
-                    if targetPlayer ~= LocalPlayer then
-                        local char = targetPlayer.Character
-                        if char then
-                            local root = char:FindFirstChild("HumanoidRootPart")
-                            local hum = char:FindFirstChildOfClass("Humanoid")
-                            if root and hum and hum.Health > 0 then
-                                myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                if TP_Delay > 0 then task.wait(TP_Delay) end
-                            end
+                    if player ~= LocalPlayer and player.Character then
+                        local root = player.Character:FindFirstChild("HumanoidRootPart")
+                        local hum = player.Character:FindFirstChildOfClass("Humanoid")
+                        if root and hum and hum.Health > 0 then
+                            myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
+                            if TP_Delay > 0 then task.wait(TP_Delay) end
                         end
                     end
                 end
             end
         end
+    end
+end)
 
-        -- Lógica do ESP Otimizada
+-- LOOP DO ESP (Otimizado: Checa Dummies raramente)
+task.spawn(function()
+    local lastDummyCheck = 0
+    while task.wait(0.1) do -- Roda 10x por segundo em vez de 60x (muito mais leve)
         if ESPEnabled then
+            -- Players (Leve)
             for _, player in ipairs(Players:GetPlayers()) do
                 if player ~= LocalPlayer and player.Character then
                     ApplyESP(player.Character, Color3.fromRGB(0, 255, 255))
                 end
             end
 
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") then
-                    if not Players:GetPlayerFromCharacter(obj) then
+            -- Dummies (Pesado - Só roda a cada 3 segundos)
+            if tick() - lastDummyCheck > 3 then
+                for _, obj in ipairs(workspace:GetChildren()) do -- GetChildren é 100x mais rápido que GetDescendants
+                    if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and not Players:GetPlayerFromCharacter(obj) then
                         ApplyESP(obj, Color3.fromRGB(255, 0, 255))
                     end
                 end
+                lastDummyCheck = tick()
             end
         else
-            -- Limpeza de ESP quando desligado
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj.Name == "LuposESP" then obj:Destroy() end
+            -- Limpeza eficiente
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player.Character and player.Character:FindFirstChild("LuposESP") then
+                    player.Character.LuposESP:Destroy()
+                end
+            end
+            -- Procura e limpa Highlights órfãos no workspace de forma segura
+            for _, obj in ipairs(workspace:GetChildren()) do
+                if obj:FindFirstChild("LuposESP") then obj.LuposESP:Destroy() end
             end
         end
-        
-        RunService.Heartbeat:Wait()
     end
 end)
-
-Rayfield:Notify({
-   Title = "LUPOS SYSTEMS",
-   Content = "Visuals Tab com Ícone de Olho carregada!",
-   Duration = 5,
-   Image = 4335482575,
-})
