@@ -25,12 +25,26 @@ local Window = Rayfield:CreateWindow({
 local MainTab = Window:CreateTab("Combat", 4483362458)
 
 -- Toggle de Ativação
-MainTab:CreateToggle({
+local StalkToggle = MainTab:CreateToggle({
    Name = "Stalker Mode (All Players)",
    CurrentValue = false,
    Flag = "StalkToggle",
    Callback = function(Value)
       StalkEnabled = Value
+   end,
+})
+
+-- Keybind para o Modo Stalker
+MainTab:CreateKeybind({
+   Name = "Stalker Keybind",
+   CurrentKeybind = "F", -- Tecla padrão (pode ser alterada no menu)
+   HoldToInteract = false,
+   Flag = "StalkKeybind", 
+   Callback = function(Keybind)
+      -- Alterna o estado do StalkEnabled
+      StalkEnabled = not StalkEnabled
+      -- Atualiza visualmente o Toggle para não ficar confuso
+      StalkToggle:Set(StalkEnabled)
    end,
 })
 
@@ -101,7 +115,7 @@ end)
 
 Rayfield:Notify({
    Title = "Gojo 0.2 Loaded",
-   Content = "Script desenvolvido por Lupos.",
+   Content = "Script desenvolvido por Lupos. Pressione F para Stalker.",
    Duration = 3,
    Image = 4483362458,
 })
