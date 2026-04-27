@@ -1,90 +1,97 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-local CollectionService = game:GetService("CollectionService") -- Novo serviço necessário
 
 -- Configurações e Variáveis de Cache
 local StalkEnabled = false
-local ESPEnabled = false -- Variável do ESP
 local StalkDistance = 3.5 
 local TP_Delay = 0.05 
-local DUMMY_TAG = "LuposDummyNPC" -- Tag invisível para marcar dummies
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Janela Principal
+-- Janela Principal (Com Sistema de Key Adicionado)
 local Window = Rayfield:CreateWindow({
    Name = "Gojo 0.2 By: Lupos",
    LoadingTitle = "Infinity Void System",
    LoadingSubtitle = "By Lupos",
-   ConfigurationSaving = { Enabled = false, FolderName = "GojoStalker" },
-   KeySystem = true,
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = "GojoStalker"
+   },
+   KeySystem = true, -- ATIVADO
    KeySettings = {
       Title = "Lupos Systems | Key",
-      Subtitle = "Autenticação",
+      Subtitle = "Autenticação Necessária",
       Note = "Chave: LUPOS_FREE_2026",
-      FileName = "LuposKey_Final_V3", 
-      SaveKey = false,
+      FileName = "LuposKey_Final_V1", -- Nome novo para não ler chaves antigas
+      SaveKey = false, -- NÃO SALVAR (Vai pedir sempre)
+      GrabKeyFromSite = false,
       Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
 })
 
--- ABAS
+-- Aba Principal
 local MainTab = Window:CreateTab("Combat", 4483362458)
-local VisualsTab = Window:CreateTab("Visuals", 4335482575) 
 
--- INTERFACE COMBAT
-MainTab:CreateToggle({ Name = "Stalker Mode (All Players)", CurrentValue = false, Flag = "StalkToggle", Callback = function(Value) StalkEnabled = Value end })
-MainTab:CreateSlider({ Name = "Distance Behind Target", Range = {1, 15}, Increment = 0.5, Suffix = " Studs", CurrentValue = 3.5, Flag = "DistSlider", Callback = function(Value) StalkDistance = Value end })
-
--- INTERFACE VISUALS
-VisualsTab:CreateToggle({
-   Name = "Dummy ESP (Purple Neon)",
+-- Toggle de Ativação
+MainTab:CreateToggle({
+   Name = "Stalker Mode (All Players)",
    CurrentValue = false,
-   Flag = "EspToggle",
+   Flag = "StalkToggle",
    Callback = function(Value)
-      ESPEnabled = Value
-      -- Se desligar, remove todos os brilhos instantaneamente
-      if not Value then
-         for _, obj in ipairs(CollectionService:GetTagged(DUMMY_TAG)) do
-            if obj:FindFirstChild("LuposESP") then obj.LuposESP:Destroy() end
-         end
-      end
+      StalkEnabled = Value
    end,
 })
 
--- Função ESP (HIGHLIGHT)
-local function ApplyHighlight(model)
-    if model:IsA("Model") and not model:FindFirstChild("LuposESP") then
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "LuposESP"
-        highlight.Parent = model
-        highlight.FillColor = Color3.fromRGB(170, 0, 255) -- Roxo Gojo
-        highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Contorno Branco
-        highlight.FillTransparency = 0.5
-        highlight.OutlineTransparency = 0
-    end
-end
+-- Slider de Distância
+MainTab:CreateSlider({
+   Name = "Distance Behind Target",
+   Range = {1, 15},
+   Increment = 0.5,
+   Suffix = " Studs",
+   CurrentValue = 3.5,
+   Flag = "DistSlider",
+   Callback = function(Value)
+      StalkDistance = Value
+   end,
+})
 
--- ========================================================
--- LÓGICA DO STALKER (IDÊNTICA À QUE FUNCIONOU - NÃO MEXER)
--- ========================================================
+-- Slider de Delay (Anti-Lag/Detection)
+MainTab:CreateSlider({
+   Name = "TP Delay (Performance)",
+   Range = {0, 0.5},
+   Increment = 0.01,
+   Suffix = "s",
+   CurrentValue = 0.05,
+   Flag = "DelaySlider",
+   Callback = function(Value)
+      TP_Delay = Value
+   end,
+})
+
+-- Lógica Otimizada (A que você confirmou que funciona)
 task.spawn(function()
     while true do
         if StalkEnabled then
             local playersList = Players:GetPlayers()
             local myChar = LocalPlayer.Character
+            
             if myChar then
                 for i = 1, #playersList do
                     local targetPlayer = playersList[i]
+                    
                     if targetPlayer ~= LocalPlayer and StalkEnabled then
                         local char = targetPlayer.Character
                         if char then
                             local root = char:FindFirstChild("HumanoidRootPart")
                             local hum = char:FindFirstChildOfClass("Humanoid")
+                            
                             if root and hum and hum.Health > 0 then
                                 myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                if TP_Delay > 0 then task.wait(TP_Delay) end
+                                
+                                if TP_Delay > 0 then
+                                    task.wait(TP_Delay)
+                                end
                             end
                         end
                     end
@@ -97,46 +104,9 @@ task.spawn(function()
     end
 end)
 
--- ========================================================
--- LÓGICA DO ESP (ULTRA OTIMIZADA)
--- ========================================================
-
--- 1. Função para marcar Dummies automaticamente (Roda apenas UMA vez)
--- Ela procura modelos que tenham um Humanoid e a palavra "Dummy" no nome.
--- Se o seu jogo usa outro nome, mude "Dummy" abaixo.
-local function TagDummiesAutomatically()
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") then
-            if not Players:GetPlayerFromCharacter(obj) and string.find(obj.Name, "Dummy") then
-                CollectionService:AddTag(obj, DUMMY_TAG)
-            end
-        end
-    end
-end
-
--- Roda a marcação em segundo plano para não dar mini-lag ao iniciar
-task.spawn(TagDummiesAutomatically)
-
--- 2. Loop de verificação do ESP (Super leve, roda a cada 5s)
-task.spawn(function()
-    while true do
-        if ESPEnabled then
-            -- CollectionService acha todos os marcados instantaneamente
-            for _, dummy in ipairs(CollectionService:GetTagged(DUMMY_TAG)) do
-                pcall(function() -- Escudo contra erros se o dummy sumir
-                    if dummy and dummy.Parent then
-                        ApplyHighlight(dummy)
-                    end
-                end)
-            end
-        end
-        task.wait(5) -- Checa novos dummies só a cada 5 segundos
-    end
-end)
-
 Rayfield:Notify({
    Title = "Gojo 0.2 Loaded",
-   Content = "Stalker Funcional e ESP Leve prontos.",
+   Content = "Script desenvolvido por Lupos.",
    Duration = 3,
    Image = 4483362458,
 })
