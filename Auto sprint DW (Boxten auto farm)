@@ -1,0 +1,69 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Variáveis de Controle
+local SprintEnabled = false
+local VIM = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
+
+-- Janela Principal
+local Window = Rayfield:CreateWindow({
+   Name = "LUPOS | Auto Sprint",
+   LoadingTitle = "Sprint System",
+   LoadingSubtitle = "by Lupos",
+   ConfigurationSaving = {
+      Enabled = false -- Como é simples, não precisa salvar config
+   },
+   KeySystem = false -- Deixei sem Key por ser um utilitário simples, mas você pode ativar se quiser
+})
+
+-- Aba Única
+local MainTab = Window:CreateTab("Settings", 4483362458)
+
+MainTab:CreateSection("Sprint Control")
+
+MainTab:CreateToggle({
+   Name = "Enabled Auto Sprint",
+   CurrentValue = false,
+   Flag = "SprintToggle",
+   Callback = function(Value)
+      SprintEnabled = Value
+      
+      -- Se desligar, garante que o Shift seja solto
+      if not Value then
+         VIM:SendKeyEvent(false, Enum.KeyCode.LeftShift, false, game)
+      end
+   end,
+})
+
+MainTab:CreateParagraph({
+    Title = "Como funciona:", 
+    Content = "O script mantém o Shift pressionado e o 're-aperta' a cada 0.5s para evitar que a stamina trave ou o personagem canse."
+})
+
+-- LÓGICA ORIGINAL (Integrada ao Toggle)
+
+-- Parte 1: Envio Contínuo (RenderStepped)
+RunService.RenderStepped:Connect(function()
+    if SprintEnabled then
+        VIM:SendKeyEvent(true, Enum.KeyCode.LeftShift, false, game)
+    end
+end)
+
+-- Parte 2: Reset de Stamina (Loop de 0.5s)
+task.spawn(function()
+    while true do
+        if SprintEnabled then
+            -- Solta e aperta rapidamente para enganar o sistema do jogo
+            VIM:SendKeyEvent(false, Enum.KeyCode.LeftShift, false, game)
+            VIM:SendKeyEvent(true, Enum.KeyCode.LeftShift, false, game)
+        end
+        task.wait(0.5)
+    end
+end)
+
+Rayfield:Notify({
+   Title = "Auto Sprint Loaded",
+   Content = "Sistema pronto para uso!",
+   Duration = 3,
+   Image = 4483362458,
+})
