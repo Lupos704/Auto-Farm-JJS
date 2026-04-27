@@ -1,109 +1,22 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
--- Configurações e Cache
-local StalkEnabled = false
-local StalkDistance = 3.5 
-local TP_Delay = 0.05 
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-
--- Janela Principal (Design Clean)
-local Window = Rayfield:CreateWindow({
-   Name = "LUPOS | v0.2",
-   LoadingTitle = "LUPOS SYSTEMS",
-   LoadingSubtitle = "by Lupos",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "LuposScripts",
-      FileName = "Gojo_02"
-   },
-   KeySystem = false 
-})
-
--- Aba de Combate
-local MainTab = Window:CreateTab("Main", 4483362458)
-
--- Interface de Usuário
-MainTab:CreateSection("Stalker Configuration")
-
 MainTab:CreateToggle({
-   Name = "Global Hyper-Stalker",
+   Name = "Ghost Mode (Invisibility)",
    CurrentValue = false,
-   Flag = "StalkToggle",
+   Flag = "GhostToggle",
    Callback = function(Value)
-      StalkEnabled = Value
+      local char = LocalPlayer.Character
+      if char then
+          -- Percorre todas as partes do corpo
+          for _, part in ipairs(char:GetDescendants()) do
+              if part:IsA("BasePart") or part:IsA("Decal") then
+                  -- Se Value for true, fica invisível (1), se não, volta ao normal (0)
+                  part.Transparency = Value and 1 or 0
+                  
+                  -- Desativa sombras para não te verem pelo chão
+                  if part:IsA("BasePart") then
+                      part.CastShadow = not Value
+                  end
+              end
+          end
+      end
    end,
-})
-
-MainTab:CreateSlider({
-   Name = "Distance (Studs)",
-   Range = {1, 15},
-   Increment = 0.5,
-   Suffix = " studs",
-   CurrentValue = 3.5,
-   Flag = "DistSlider",
-   Callback = function(Value)
-      StalkDistance = Value
-   end,
-})
-
-MainTab:CreateSlider({
-   Name = "TP Delay / Lag Fix",
-   Range = {0, 0.5},
-   Increment = 0.01,
-   Suffix = "s",
-   CurrentValue = 0.05,
-   Flag = "DelaySlider",
-   Callback = function(Value)
-      TP_Delay = Value
-   end,
-})
-
--- Lógica Otimizada Anti-Lag
-task.spawn(function()
-    while true do
-        if StalkEnabled then
-            local playersList = Players:GetPlayers()
-            local myChar = LocalPlayer.Character
-            
-            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                for i = 1, #playersList do
-                    if not StalkEnabled then break end
-                    
-                    local targetPlayer = playersList[i]
-                    if targetPlayer ~= LocalPlayer then
-                        local char = targetPlayer.Character
-                        if char then
-                            local root = char:FindFirstChild("HumanoidRootPart")
-                            local hum = char:FindFirstChildOfClass("Humanoid")
-                            
-                            if root and hum and hum.Health > 0 then
-                                -- Teleporte suave usando Pivot
-                                myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                
-                                -- Delay para processamento e hit registration
-                                if TP_Delay > 0 then
-                                    task.wait(TP_Delay)
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        else
-            -- Economiza CPU quando o script está desligado
-            task.wait(0.3)
-        end
-        RunService.Heartbeat:Wait()
-    end
-end)
-
--- Notificação de Sucesso
-Rayfield:Notify({
-   Title = "LUPOS SYSTEMS",
-   Content = "Gojo 0.2 carregado com sucesso!",
-   Duration = 4,
-   Image = 4483362458,
 })
