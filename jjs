@@ -1,6 +1,6 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Configurações e Variáveis de Cache
+-- Configurações Iniciais
 local StalkEnabled = false
 local StalkDistance = 3.5 
 local TP_Delay = 0.05 
@@ -9,33 +9,30 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Janela Principal (Com Sistema de Key Adicionado)
+-- Janela Principal
 local Window = Rayfield:CreateWindow({
-   Name = "Gojo 0.2 By: Lupos",
-   LoadingTitle = "Infinity Void System",
-   LoadingSubtitle = "By Lupos",
+   Name = "DFX Hyper-Stalker | All-Players Edition",
+   LoadingTitle = "DFX Systems",
+   LoadingSubtitle = "by Gemini",
    ConfigurationSaving = {
-      Enabled = false,
-      FolderName = "GojoStalker"
+      Enabled = true,
+      FolderName = "DFX_Stalker", 
+      FileName = "Config"
    },
-   KeySystem = true, -- ATIVADO
-   KeySettings = {
-      Title = "Lupos Systems | Key",
-      Subtitle = "Autenticação Necessária",
-      Note = "Chave: LUPOS_FREE_2026",
-      FileName = "LuposKey_Final_V1", -- Nome novo para não ler chaves antigas
-      SaveKey = false, -- NÃO SALVAR (Vai pedir sempre)
-      GrabKeyFromSite = false,
-      Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
-   }
+   Discord = {
+      Enabled = false,
+      Invite = "", 
+      RememberJoins = true 
+   },
+   KeySystem = false 
 })
 
--- Aba Principal
-local MainTab = Window:CreateTab("Combat", 4483362458)
+-- Tab Principal
+local MainTab = Window:CreateTab("Main Loop", 4483362458) -- Ícone de alvo
 
 -- Toggle de Ativação
-MainTab:CreateToggle({
-   Name = "Stalker Mode (All Players)",
+local Toggle = MainTab:CreateToggle({
+   Name = "Enable Global Stalking",
    CurrentValue = false,
    Flag = "StalkToggle",
    Callback = function(Value)
@@ -45,23 +42,23 @@ MainTab:CreateToggle({
 
 -- Slider de Distância
 MainTab:CreateSlider({
-   Name = "Distance Behind Target",
+   Name = "Stalk Distance",
    Range = {1, 15},
    Increment = 0.5,
    Suffix = " Studs",
    CurrentValue = 3.5,
-   Flag = "DistSlider",
+   Flag = "DistanceSlider",
    Callback = function(Value)
       StalkDistance = Value
    end,
 })
 
--- Slider de Delay (Anti-Lag/Detection)
+-- Slider de Delay (Velocidade do Ciclo)
 MainTab:CreateSlider({
-   Name = "TP Delay (Performance)",
+   Name = "TP Delay (Hit Reg)",
    Range = {0, 0.5},
    Increment = 0.01,
-   Suffix = "s",
+   Suffix = " sec",
    CurrentValue = 0.05,
    Flag = "DelaySlider",
    Callback = function(Value)
@@ -69,44 +66,48 @@ MainTab:CreateSlider({
    end,
 })
 
--- Lógica Otimizada (A que você confirmou que funciona)
+-- Seção de Créditos/Info
+local InfoSection = MainTab:CreateSection("Status")
+local StatusLabel = MainTab:CreateLabel("Targeting: Cycling Server Players")
+
+-- Lógica Principal (Loop de Stalking)
 task.spawn(function()
     while true do
         if StalkEnabled then
-            local playersList = Players:GetPlayers()
-            local myChar = LocalPlayer.Character
+            local allPlayers = Players:GetPlayers()
             
-            if myChar then
-                for i = 1, #playersList do
-                    local targetPlayer = playersList[i]
+            for _, targetPlayer in ipairs(allPlayers) do
+                if not StalkEnabled then break end -- Para instantaneamente se desligar o toggle
+
+                if targetPlayer ~= LocalPlayer and targetPlayer.Character then
+                    local character = targetPlayer.Character
+                    local root = character:FindFirstChild("HumanoidRootPart")
+                    local hum = character:FindFirstChildOfClass("Humanoid")
                     
-                    if targetPlayer ~= LocalPlayer and StalkEnabled then
-                        local char = targetPlayer.Character
-                        if char then
-                            local root = char:FindFirstChild("HumanoidRootPart")
-                            local hum = char:FindFirstChildOfClass("Humanoid")
-                            
-                            if root and hum and hum.Health > 0 then
-                                myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                
-                                if TP_Delay > 0 then
-                                    task.wait(TP_Delay)
-                                end
-                            end
+                    if root and hum and hum.Health > 0 then
+                        local myChar = LocalPlayer.Character
+                        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                            -- Executa o Teleporte
+                            myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
+                            task.wait(TP_Delay)
                         end
                     end
                 end
             end
-        else
-            task.wait(0.5)
         end
         RunService.Heartbeat:Wait()
     end
 end)
 
 Rayfield:Notify({
-   Title = "Gojo 0.2 Loaded",
-   Content = "Script desenvolvido por Lupos.",
-   Duration = 3,
+   Title = "Script Loaded",
+   Content = "DFX Hyper-Stalker V3 ready!",
+   Duration = 5,
    Image = 4483362458,
+   Actions = {
+      Ignore = {
+         Name = "Okay!",
+         Callback = function() print("User acknowledged.") end
+      },
+   },
 })
