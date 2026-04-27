@@ -24,8 +24,8 @@ local Window = Rayfield:CreateWindow({
       Title = "Lupos Systems | Key",
       Subtitle = "Autenticação Necessária",
       Note = "Chave: LUPOS_FREE_2026",
-      FileName = "LuposKey", 
-      SaveKey = false, -- Exige a chave sempre
+      FileName = "LuposKey_V3", -- Alterado para resetar o cache
+      SaveKey = false,          -- Garantido: não salvará mais
       GrabKeyFromSite = false,
       Key = {"LUPOS_FREE_2026", "GOJO_TOP_TIER"}
    }
@@ -98,7 +98,7 @@ task.spawn(function()
                 end
             end
         else
-            task.wait(0.5) -- Descanso total da CPU se estiver desligado
+            task.wait(0.5) 
         end
         RunService.Heartbeat:Wait()
     end
@@ -106,7 +106,7 @@ end)
 
 Rayfield:Notify({
    Title = "LUPOS SYSTEMS",
-   Content = "Versão Performance carregada!",
+   Content = "Versão Performance (No-Save Key) Carregada!",
    Duration = 4,
    Image = 4483362458,
 })
