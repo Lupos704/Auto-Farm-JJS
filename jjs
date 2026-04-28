@@ -1,121 +1,83 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Configurações e Variáveis de Cache
-local StalkEnabled = false
-local StalkDistance = 3.5 
-local TP_Delay = 0.05 
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-
--- Janela Principal
 local Window = Rayfield:CreateWindow({
-   Name = "Gojo 0.2 By: Lupos",
-   LoadingTitle = "Infinity Void System",
-   LoadingSubtitle = "By Lupos",
-   ConfigurationSaving = {
-      Enabled = false,
-      FolderName = "GojoStalker"
-   },
-   KeySystem = false 
+   Name = "Gojo-0.2 | ESTÁVEL",
+   LoadingTitle = "Gojo-0.2 By LUPOS",
+   LoadingSubtitle = "Créditos: Lupos",
+   ConfigurationSaving = {Enabled = false}
 })
 
--- Aba Principal
-local MainTab = Window:CreateTab("Combat", 4483362458)
+local Tab = Window:CreateTab("Principal", 4483362458)
 
--- Toggle de Ativação
-local StalkToggle = MainTab:CreateToggle({
-   Name = "Stalker Mode (All Players)",
-   CurrentValue = false,
-   Flag = "StalkToggle",
-   Callback = function(Value)
-      StalkEnabled = Value
-   end,
-})
+local tpEnabled = false
+local tpDelay = 0.1 -- Aumentado levemente para estabilidade
+local loopId = 0
 
--- Keybind para o Modo Stalker
-MainTab:CreateKeybind({
-   Name = "Stalker Keybind",
-   CurrentKeybind = "F", -- Tecla padrão (pode ser alterada no menu)
-   HoldToInteract = false,
-   Flag = "StalkKeybind", 
-   Callback = function(Keybind)
-      -- Alterna o estado do StalkEnabled
-      StalkEnabled = not StalkEnabled
-      -- Atualiza visualmente o Toggle para não ficar confuso
-      StalkToggle:Set(StalkEnabled)
-   end,
-})
+Tab:CreateSection("Anti-Rubber Band Edition")
 
--- Slider de Distância
-MainTab:CreateSlider({
-   Name = "Distance Behind Target",
-   Range = {1, 15},
-   Increment = 0.5,
-   Suffix = " Studs",
-   CurrentValue = 3.5,
-   Flag = "DistSlider",
-   Callback = function(Value)
-      StalkDistance = Value
-   end,
-})
-
--- Slider de Delay (Anti-Lag/Detection)
-MainTab:CreateSlider({
-   Name = "TP Delay (Performance)",
-   Range = {0, 0.5},
-   Increment = 0.01,
-   Suffix = "s",
-   CurrentValue = 0.05,
-   Flag = "DelaySlider",
-   Callback = function(Value)
-      TP_Delay = Value
-   end,
-})
-
--- Lógica Otimizada (Menos Lag)
-task.spawn(function()
-    while true do
-        if StalkEnabled then
-            local playersList = Players:GetPlayers()
-            local myChar = LocalPlayer.Character
-            
-            if myChar then
-                for i = 1, #playersList do
-                    local targetPlayer = playersList[i]
-                    
-                    -- Verifica se não é você e se o toggle continua ativo
-                    if targetPlayer ~= LocalPlayer and StalkEnabled then
-                        local char = targetPlayer.Character
-                        if char then
-                            local root = char:FindFirstChild("HumanoidRootPart")
-                            local hum = char:FindFirstChildOfClass("Humanoid")
-                            
-                            -- Só teletransporta se o alvo estiver vivo
-                            if root and hum and hum.Health > 0 then
-                                myChar:PivotTo(root.CFrame * CFrame.new(0, 0, StalkDistance))
-                                
-                                -- Delay para registro de hit e alívio de CPU
-                                if TP_Delay > 0 then
-                                    task.wait(TP_Delay)
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        else
-            -- Se estiver desligado, espera um pouco mais para economizar recursos
-            task.wait(0.5)
-        end
-        RunService.Heartbeat:Wait()
+local function safeTeleport(targetPart)
+    local lp = game.Players.LocalPlayer
+    local char = lp.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if hrp and targetPart then
+        -- 1. Zera a física para o servidor não se confundir
+        hrp.Velocity = Vector3.new(0,0,0)
+        hrp.RotVelocity = Vector3.new(0,0,0)
+        
+        -- 2. Teleporta com um pequeno offset para cima e para frente
+        local newPos = targetPart.CFrame * CFrame.new(0, 0, -2.5)
+        hrp.CFrame = newPos
+        
+        -- 3. "Ancoragem" Relâmpago: Força o servidor a registrar a posição
+        -- Isso é o que evita o teleporte falso
+        hrp.Anchored = true
+        task.wait(0.01)
+        hrp.Anchored = false
     end
-end)
+end
 
-Rayfield:Notify({
-   Title = "Gojo 0.2 Loaded",
-   Content = "Script desenvolvido por Lupos. Pressione F para Stalker.",
-   Duration = 3,
-   Image = 4483362458,
+local Toggle = Tab:CreateToggle({
+   Name = "Ativar Turbo TP",
+   CurrentValue = false,
+   Flag = "TurboToggle",
+   Callback = function(Value)
+      tpEnabled = Value
+      if tpEnabled then
+         loopId = loopId + 1
+         local current = loopId
+         task.spawn(function()
+            while tpEnabled and current == loopId do
+               local players = game.Players:GetPlayers()
+               for _, target in pairs(players) do
+                  if not tpEnabled or current ~= loopId then break end
+                  if target ~= game.Players.LocalPlayer and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                     safeTeleport(target.Character.HumanoidRootPart)
+                     task.wait(tpDelay)
+                  end
+               end
+               task.wait(0.1)
+            end
+         end)
+      end
+   end,
+})
+
+Tab:CreateKeybind({
+   Name = "Atalho: Tecla (E)",
+   CurrentKeybind = "E",
+   Callback = function()
+      Toggle:Set(not tpEnabled)
+   end,
+})
+
+Tab:CreateSlider({
+   Name = "Delay de Segurança",
+   Range = {0.05, 1},
+   Increment = 0.05,
+   Suffix = "s",
+   CurrentValue = 0.1,
+   Callback = function(Value)
+      tpDelay = Value
+   end,
 })
